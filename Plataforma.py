@@ -111,17 +111,16 @@ while True:  # Lop infinito do game
 
     display.blit(fundo, (0, 0))  # Preenche o fundo da tela
 
-    # Elementos do cenario
+    # Elementos do cenario - fundo
     for objeto in objetos_cenario:
         posicao_obj = (objeto[1][0] - rolagem_tela[0] * objeto[0],
                        objeto[1][1] - rolagem_tela[1] * objeto[0])
-
         if objeto[1][2] == 'ilha_perto':
             display.blit(ilha_perto, posicao_obj)
-        else:
+        elif objeto[1][2] == 'ilha_fundo':
             display.blit(ilha_longe, posicao_obj)
 
-    # loop para prrencher o mapa percorrendo o lista bidimensional
+    # loop para prrencher o mapa percorrendo o lista bidimensional do arquivo
     y = 0
     colisao_blocos = []
     for linha in mapa_game:
@@ -152,6 +151,7 @@ while True:  # Lop infinito do game
     if personagem_y_momentum > 5:  # Se a força da gravidade chegar a 5
         personagem_y_momentum = 5  # Não aumentara mais, estaciona no 5
 
+    # Colisões
     personagem_colisao, colisoes = mover(personagem_colisao, personagem_movimentacao, colisao_blocos)
 
     if colisoes['abaixo']:  # Se estiver no chão (Colidindo com algo abaixo)
@@ -166,6 +166,7 @@ while True:  # Lop infinito do game
     # Renderiza a imagem do personagem sobre a tela na posição do personagem_colisao
     display.blit(personagem_sprite, (personagem_colisao.x - rolagem_tela[0], personagem_colisao.y - rolagem_tela[1]))
 
+    # Captura de eventos
     for evento in pygame.event.get():  # event loop
         if evento.type == QUIT:  # Se o evento for QUIT (sair)
             pygame.quit()  # Finaliza o game e fecha a tela
@@ -186,7 +187,7 @@ while True:  # Lop infinito do game
             if evento.key == K_LEFT:
                 andando_esq = False
 
-    # escala o display (onde estão os elementos do jogo) para o tamanho da janela
+    # Escala o display (onde estão os elementos do jogo) para o tamanho da janela
     tela_visivel = pygame.transform.scale(display, janela_tamanho)
     janela_game.blit(tela_visivel, (0, 0))  # Exibe na janela do game a tela_visivel
     pygame.display.update()  # Comando para atualizar a tela acada loop
