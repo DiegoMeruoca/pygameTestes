@@ -1,6 +1,7 @@
 import pygame  # importa o pygame
 import sys  # importa recursos do sistema
 from pygame.locals import *  # importa os modulos do pygame
+import random
 
 clock = pygame.time.Clock()  # Cria uma variavel de controle de clock (Ciclos/tempo)
 pygame.init()  # Inicializando o pygame
@@ -39,11 +40,25 @@ def mover(player_colisao, movimento, blocos_colisao):
     return player_colisao, tipos_colisao
 
 
-janela_tamanho = (820, 640)  # Cria uma variavel com o tamenho da janela em pixels
+# Carrega a base do nosos mapa de um txt (0-Epaço vazio(céu) 1-Bloco de terra 2-Bloco com grama)
+def carregar_mapa(path):
+    arquivo = open(path + '.txt', 'r')
+    dados = arquivo.read()
+    arquivo.close()
+    dados = dados.split('\n')
+    mapa = []
+    for linha in dados:
+        mapa.append(list(linha))
+    return mapa
+
+
+# Configurações da janela
+janela_tamanho = (820, 460)  # Cria uma variavel com o tamenho da janela em pixels
 pygame.display.set_caption("Meu jogo")  # Define o título do game que aparece na janela
 janela_game = pygame.display.set_mode(janela_tamanho, 0, 32)  # Exibindo a tela
-display = pygame.Surface((410, 320))
+display = pygame.Surface((janela_tamanho[0] / 2, janela_tamanho[1] / 2))
 
+# Importação da imagens
 personagem_sprite = pygame.image.load('imagens/player.png')  # Adiciona a imagem do player  que está na pasta imagens
 personagem_sprite = pygame.transform.scale(personagem_sprite, (32, 32))  # Redimensiona o personagem para 32 x 32 pixels
 # personagem.set_colorkey((255, 255, 255)) Define que no personagem a cor branca se torna transparente se tiver com
@@ -56,32 +71,55 @@ tamanho_blocos = bloco_grama.get_width()  # Define o tamanho dos blocos, para o 
 bloco_terra = pygame.image.load('imagens/terra.png')  # Importa o bloco de terra
 bloco_terra = pygame.transform.scale(bloco_terra, (32, 32))
 
-# Cria a base do nosos mapa 0-Epaço vazio(céu) 1-Bloco de terra 2-Bloco com grama
-mapa_game = [
-            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-            ['0', '0', '0', '0', '0', '0', '0', '2', '2', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '2', '2', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0'],
-            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-            ['2', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '2', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '2', '2'],
-            ['1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '1', '1', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '1', '1'],
-            ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-            ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-            ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-            ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-            ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1']]
+fundo = pygame.image.load('imagens/fundo.jpg')  # Importa o bloco de terra
+fundo = pygame.transform.scale(fundo, (display.get_width(), display.get_height()))
 
+ilha_perto = pygame.image.load('imagens/ilhaPerto.png')
+ilha_perto = pygame.transform.scale(ilha_perto, (100, 100))
+
+ilha_longe = pygame.image.load('imagens/ilhaLonge.png')
+ilha_longe = pygame.transform.scale(ilha_longe, (120, 120))
+
+# Definição da variaveis do jogo
+mapa_game = carregar_mapa('mapas/mapa1')
 andando_dir = False
 andando_esq = False
 personagem_y_momentum = 0
 tempo_no_ar = 0
+rolagem_verdadeira = [0, 0]
 personagem_colisao = pygame.Rect(50, 50, personagem_sprite.get_width(),
                                  personagem_sprite.get_height())  # Cria o retangulo de colisaão do personagem,
 # com base na sua posição e tamanho
+objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [Paralax, [X, Y, tipo]
+                   [0.25, [480, 60, 'ilha_fundo']],
+                   [0.25, [730, 30, 'ilha_fundo']],
+                   [0.5, [230, 40, 'ilha_perto']],
+                   [0.5, [450, 90, 'ilha_perto']],
+                   [0.5, [810, 120, 'ilha_perto']],
+                   [0.5, [950, 45, 'ilha_perto']],
+                   [0.5, [1170, 100, 'ilha_perto']]]
 
 while True:  # Lop infinito do game
-    display.fill((146, 244, 255))  # Preenche o fundo da tela
+    display.fill((146, 244, 255))
+
+    # Controle de rolagem (Camera)
+    rolagem_verdadeira[0] += (personagem_colisao.x - rolagem_verdadeira[0] - display.get_width() / 2) / 20
+    rolagem_verdadeira[1] += (personagem_colisao.y - rolagem_verdadeira[1] - display.get_height() / 2) / 20
+    rolagem_tela = rolagem_verdadeira.copy()
+    rolagem_tela[0] = int(rolagem_tela[0])
+    rolagem_tela[1] = int(rolagem_tela[1])
+
+    display.blit(fundo, (0, 0))  # Preenche o fundo da tela
+
+    # Elementos do cenario
+    for objeto in objetos_cenario:
+        posicao_obj = (objeto[1][0] - rolagem_tela[0] * objeto[0],
+                       objeto[1][1] - rolagem_tela[1] * objeto[0])
+
+        if objeto[1][2] == 'ilha_perto':
+            display.blit(ilha_perto, posicao_obj)
+        else:
+            display.blit(ilha_longe, posicao_obj)
 
     # loop para prrencher o mapa percorrendo o lista bidimensional
     y = 0
@@ -90,9 +128,11 @@ while True:  # Lop infinito do game
         x = 0
         for celula in linha:
             if celula == '1':  # Se a celula for 1
-                display.blit(bloco_terra, (x * tamanho_blocos, y * tamanho_blocos))  # Desenha a terra
+                display.blit(bloco_terra, (x * tamanho_blocos - rolagem_tela[0], y * tamanho_blocos - rolagem_tela[1]))
+                # Desenha a terra, na posição subtraimos rolagem_tela, isso permite que o bloco se mova para esquerda
+                # caso o valor de rolagem_tela aumente, e para esquerda caso diminua, dando o efeito de rolagem de tela
             if celula == '2':
-                display.blit(bloco_grama, (x * tamanho_blocos, y * tamanho_blocos))  # Desenha a grama
+                display.blit(bloco_grama, (x * tamanho_blocos - rolagem_tela[0], y * tamanho_blocos - rolagem_tela[1]))
             if celula != '0':  # Se a celula for diferente de 0, ou seja, é um solido
                 colisao_blocos.append(pygame.Rect(x * tamanho_blocos, y * tamanho_blocos,
                                                   tamanho_blocos, tamanho_blocos))
@@ -124,7 +164,7 @@ while True:  # Lop infinito do game
         personagem_y_momentum = 0
 
     # Renderiza a imagem do personagem sobre a tela na posição do personagem_colisao
-    display.blit(personagem_sprite, (personagem_colisao.x, personagem_colisao.y))
+    display.blit(personagem_sprite, (personagem_colisao.x - rolagem_tela[0], personagem_colisao.y - rolagem_tela[1]))
 
     for evento in pygame.event.get():  # event loop
         if evento.type == QUIT:  # Se o evento for QUIT (sair)
@@ -137,7 +177,7 @@ while True:  # Lop infinito do game
             if evento.key == K_LEFT:
                 andando_esq = True
             if evento.key == K_SPACE:
-                if tempo_no_ar < 6 :  # Para um double jump experimente 30
+                if tempo_no_ar < 6:  # Para um double jump experimente 30
                     personagem_y_momentum = -5
 
         if evento.type == KEYUP:  # Ao soltar alguma tecla
