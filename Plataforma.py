@@ -1,10 +1,9 @@
 import pygame  # importa o pygame
 import sys  # importa recursos do sistema
 from pygame.locals import *  # importa os modulos do pygame
-import random
 
-clock = pygame.time.Clock()  # Cria uma variavel de controle de clock (Ciclos/tempo)
-pygame.init()  # Inicializando o pygame
+global frames_animacao  # Declarando uma variavel global
+frames_animacao = {}
 
 
 def testador_colisoes(player_colisao, blocos_colisao):
@@ -52,32 +51,83 @@ def carregar_mapa(path):
     return mapa
 
 
+# Controla a rolagem da tela - Movimentação da Camera
+def controle_rolagem_tela():
+    rolagem_verdadeira[0] += (personagem_colisao.x - rolagem_verdadeira[0] - display.get_width() / 2) / 20
+    rolagem_verdadeira[1] += (personagem_colisao.y - rolagem_verdadeira[1] - display.get_height() / 2) / 20
+    rolagem_tela = rolagem_verdadeira.copy()
+    rolagem_tela[0] = int(rolagem_tela[0])
+    rolagem_tela[1] = int(rolagem_tela[1])
+    return rolagem_tela
+
+
+# Insere na tela os objetos de fundo do cenário de acordo com a variavel objetos_cenario
+def preencher_fundo_cenario():
+    for objeto in objetos_cenario:
+        posicao_obj = (objeto[1][0] - rolagem_tela[0] * objeto[0],
+                       objeto[1][1] - rolagem_tela[1] * objeto[0])
+        if objeto[1][2] == 'ilha_perto':
+            display.blit(ilha_perto, posicao_obj)
+        elif objeto[1][2] == 'ilha_fundo':
+            display.blit(ilha_longe, posicao_obj)
+
+
+# Funcção para carregar e armazenar as animaçoes do personagem
+def carregar_animacoes(path, duracao_frame, sprite_largura, sprite_altura):
+    global frames_animacao
+    nome_animacao = path.split('/')[-2]  # Divide a string do path nas baras e retorna o ultimo item encontrado "parado"
+    base_frames_animacao = []  # Cria uma lista pra servir de base para as imagens
+    n = 0
+    for frame in duracao_frame:
+        id_animacao_frame = nome_animacao + '_' + str(n)  # Define o id por exemplo correndo_1
+        imagem_loc = path + str(n) + '.png'  # Define o caminho completo da imagems
+        imagem_animacao = pygame.image.load(imagem_loc).convert_alpha()  # Carrega a imagem
+        imagem_animacao = pygame.transform.scale(imagem_animacao, (sprite_largura, sprite_altura))  # Escala
+        frames_animacao[id_animacao_frame] = imagem_animacao.copy()  # Adiciona na lista
+        for i in range(frame):
+            base_frames_animacao.append(id_animacao_frame)
+        n += 1
+    return base_frames_animacao
+
+
+# Função para alterar a animação que está sendo utilizada
+def alterar_animacao(acao, frame, nova_acao):
+    if acao != nova_acao:
+        acao = nova_acao
+        frame = 0
+    return acao, frame
+
+
+# Inicicializador
+pygame.init()  # Inicializando o pygame
+clock = pygame.time.Clock()  # Cria uma variavel de controle de clock (Ciclos/tempo)
+
 # Configurações da janela
 janela_tamanho = (820, 460)  # Cria uma variavel com o tamenho da janela em pixels
 pygame.display.set_caption("Meu jogo")  # Define o título do game que aparece na janela
 janela_game = pygame.display.set_mode(janela_tamanho, 0, 32)  # Exibindo a tela
-display = pygame.Surface((janela_tamanho[0] / 2, janela_tamanho[1] / 2))
+display = pygame.Surface((janela_tamanho[0] / 2, janela_tamanho[1] / 2))  # Cria o Display do game, area visivel do jogo
 
 # Importação da imagens
-personagem_sprite = pygame.image.load('imagens/player.png')  # Adiciona a imagem do player  que está na pasta imagens
+personagem_sprite = pygame.image.load('imagens/personagens/player1/parado/0.png')  # Adiciona a imagem do player  que está na pasta imagens
 personagem_sprite = pygame.transform.scale(personagem_sprite, (32, 32))  # Redimensiona o personagem para 32 x 32 pixels
 # personagem.set_colorkey((255, 255, 255)) Define que no personagem a cor branca se torna transparente se tiver com
 # fundo branco, neste caso já renovi o fundo em um editor de image
 
-bloco_grama = pygame.image.load('imagens/grama.png')  # Importa o bloco com grama
-bloco_grama = pygame.transform.scale(bloco_grama, (32, 32))
-tamanho_blocos = bloco_grama.get_width()  # Define o tamanho dos blocos, para o tamanho da imagem grama
+tamanho_blocos = 32  # Define o tamanho dos blocos do jogo para 32 pixels
+bloco_grama = pygame.image.load('imagens/cenario/blocos/BlocoSuperficie.png')  # Importa o bloco com grama
+bloco_grama = pygame.transform.scale(bloco_grama, (tamanho_blocos, tamanho_blocos))
 
-bloco_terra = pygame.image.load('imagens/terra.png')  # Importa o bloco de terra
-bloco_terra = pygame.transform.scale(bloco_terra, (32, 32))
+bloco_terra = pygame.image.load('imagens/cenario/blocos/BlocoBase.png')  # Importa o bloco de terra
+bloco_terra = pygame.transform.scale(bloco_terra, (tamanho_blocos, tamanho_blocos))
 
-fundo = pygame.image.load('imagens/fundo.jpg')  # Importa o bloco de terra
+fundo = pygame.image.load('imagens/cenario/fundo.jpg')
 fundo = pygame.transform.scale(fundo, (display.get_width(), display.get_height()))
 
-ilha_perto = pygame.image.load('imagens/ilhaPerto.png')
+ilha_perto = pygame.image.load('imagens/cenario/ObjCenarioPerto.png')
 ilha_perto = pygame.transform.scale(ilha_perto, (100, 100))
 
-ilha_longe = pygame.image.load('imagens/ilhaLonge.png')
+ilha_longe = pygame.image.load('imagens/cenario/ObjCenarioLonge.png')
 ilha_longe = pygame.transform.scale(ilha_longe, (120, 120))
 
 # Definição da variaveis do jogo
@@ -87,10 +137,15 @@ andando_esq = False
 personagem_y_momentum = 0
 tempo_no_ar = 0
 rolagem_verdadeira = [0, 0]
-personagem_colisao = pygame.Rect(50, 50, personagem_sprite.get_width(),
-                                 personagem_sprite.get_height())  # Cria o retangulo de colisaão do personagem,
+animacao_atual = 'parado'
+frame_aimacao_atual = 0
+pulando = False
+personagem_espelhado = False
+personagem_altura = 40
+personagem_largura = 32
+personagem_colisao = pygame.Rect(50, 50, personagem_largura, personagem_altura)  # Cria o retangulo de colisaão do personagem,
 # com base na sua posição e tamanho
-objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [Paralax, [X, Y, tipo]
+objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
                    [0.25, [480, 60, 'ilha_fundo']],
                    [0.25, [730, 30, 'ilha_fundo']],
                    [0.5, [230, 40, 'ilha_perto']],
@@ -99,28 +154,22 @@ objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [Paralax, [X, Y, tipo]
                    [0.5, [950, 45, 'ilha_perto']],
                    [0.5, [1170, 100, 'ilha_perto']]]
 
+# Preenchendo a base de dados de animações
+database_animacoes = {
+    'correndo': carregar_animacoes('imagens/personagens/player1/correndo/', [4, 4, 4, 4, 4, 4, 4, 4], personagem_largura, personagem_altura),
+    'parado': carregar_animacoes('imagens/personagens/player1/parado/', [14, 14], personagem_largura, personagem_altura),
+    'pulando': carregar_animacoes('imagens/personagens/player1/pulando/', [14, 21], personagem_largura, personagem_altura)}
+
 while True:  # Lop infinito do game
-    display.fill((146, 244, 255))
+    # display.fill((146, 244, 255))  # Cor do fundo do game - 'Céu'
 
-    # Controle de rolagem (Camera)
-    rolagem_verdadeira[0] += (personagem_colisao.x - rolagem_verdadeira[0] - display.get_width() / 2) / 20
-    rolagem_verdadeira[1] += (personagem_colisao.y - rolagem_verdadeira[1] - display.get_height() / 2) / 20
-    rolagem_tela = rolagem_verdadeira.copy()
-    rolagem_tela[0] = int(rolagem_tela[0])
-    rolagem_tela[1] = int(rolagem_tela[1])
+    rolagem_tela = controle_rolagem_tela()  # Cahama o controle de camera
 
-    display.blit(fundo, (0, 0))  # Preenche o fundo da tela
+    display.blit(fundo, (0, 0))  # Preenche o fundo da tela coma a imagem
 
-    # Elementos do cenario - fundo
-    for objeto in objetos_cenario:
-        posicao_obj = (objeto[1][0] - rolagem_tela[0] * objeto[0],
-                       objeto[1][1] - rolagem_tela[1] * objeto[0])
-        if objeto[1][2] == 'ilha_perto':
-            display.blit(ilha_perto, posicao_obj)
-        elif objeto[1][2] == 'ilha_fundo':
-            display.blit(ilha_longe, posicao_obj)
+    preencher_fundo_cenario()  # Chama a funççao que preenche os itens de fundo do cenário
 
-    # loop para prrencher o mapa percorrendo o lista bidimensional do arquivo
+    # loop para prrencher o mapa percorrendo a lista bidimensional na variavel mapa_game (Populada com dados do txt)
     y = 0
     colisao_blocos = []
     for linha in mapa_game:
@@ -151,20 +200,46 @@ while True:  # Lop infinito do game
     if personagem_y_momentum > 5:  # Se a força da gravidade chegar a 5
         personagem_y_momentum = 5  # Não aumentara mais, estaciona no 5
 
+    # Alterar animação de acordo com o movimento
+    if not pulando:
+        if personagem_movimentacao[0] > 0:  # Se estiver se movendo para direita
+            animacao_atual, frame_aimacao_atual = alterar_animacao(animacao_atual, frame_aimacao_atual, 'correndo')
+            personagem_espelhado = False
+        if personagem_movimentacao[0] < 0:  # Se estiver se movendo para esquerda
+            animacao_atual, frame_aimacao_atual = alterar_animacao(animacao_atual, frame_aimacao_atual, 'correndo')
+            personagem_espelhado = True
+        if personagem_movimentacao[0] == 0:  # Se estiver se movendo para direita
+            animacao_atual, frame_aimacao_atual = alterar_animacao(animacao_atual, frame_aimacao_atual, 'parado')
+    else:
+        animacao_atual, frame_aimacao_atual = alterar_animacao(animacao_atual, frame_aimacao_atual, 'pulando')
+        if personagem_movimentacao[0] > 0:  # Se estiver se pulando para direita
+            personagem_espelhado = False
+        if personagem_movimentacao[0] < 0:  # Se estiver se pulando para esquerda
+            personagem_espelhado = True
+
     # Colisões
     personagem_colisao, colisoes = mover(personagem_colisao, personagem_movimentacao, colisao_blocos)
 
     if colisoes['abaixo']:  # Se estiver no chão (Colidindo com algo abaixo)
         personagem_y_momentum = 0
         tempo_no_ar = 0
+        pulando = False
     else:
         tempo_no_ar += 1
 
     if colisoes['acima']:
         personagem_y_momentum = 0
 
+    # Controle da animação
+    frame_aimacao_atual += 1
+    if frame_aimacao_atual >= len(database_animacoes[animacao_atual]):
+        frame_aimacao_atual = 0
+    personagem_sprite_id = database_animacoes[animacao_atual][frame_aimacao_atual]
+    personagem_sprite = frames_animacao[personagem_sprite_id]
     # Renderiza a imagem do personagem sobre a tela na posição do personagem_colisao
-    display.blit(personagem_sprite, (personagem_colisao.x - rolagem_tela[0], personagem_colisao.y - rolagem_tela[1]))
+    display.blit(pygame.transform.flip(personagem_sprite, personagem_espelhado, False),
+                 (personagem_colisao.x - rolagem_tela[0], personagem_colisao.y - rolagem_tela[1]))
+    # Transform flip espelha ou não o personagem de acordo com a variavel personagem_espelhado
 
     # Captura de eventos
     for evento in pygame.event.get():  # event loop
@@ -180,6 +255,7 @@ while True:  # Lop infinito do game
             if evento.key == K_SPACE:
                 if tempo_no_ar < 6:  # Para um double jump experimente 30
                     personagem_y_momentum = -5
+                    pulando = True
 
         if evento.type == KEYUP:  # Ao soltar alguma tecla
             if evento.key == K_RIGHT:  # Se for seta direita
@@ -191,4 +267,4 @@ while True:  # Lop infinito do game
     tela_visivel = pygame.transform.scale(display, janela_tamanho)
     janela_game.blit(tela_visivel, (0, 0))  # Exibe na janela do game a tela_visivel
     pygame.display.update()  # Comando para atualizar a tela acada loop
-    clock.tick(60)  # Define queo game vai rodar a 60 FPS
+    clock.tick(60)  # Define que o game vai rodar a 60 FPS
