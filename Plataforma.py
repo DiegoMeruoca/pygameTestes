@@ -130,6 +130,15 @@ ilha_perto = pygame.transform.scale(ilha_perto, (100, 100))
 ilha_longe = pygame.image.load('imagens/cenario/ObjCenarioLonge.png')
 ilha_longe = pygame.transform.scale(ilha_longe, (120, 120))
 
+# Importar os sons
+som_pulo = pygame.mixer.Sound('sons/pulo.wav')
+musica_fundo = pygame.mixer.Sound('sons/musica.mp3')
+# Play na musica. 0 - Toca uma e repete 0. 3 - Toaca uma e repete 3. -1 - Toca uma e repete ate fechar
+musica_fundo.play(-1)
+'''# Tocar a musica outra maneira
+pygame.mixer.music.load('sons/musica.wav')
+pygame.mixer.music.play(-1)  '''
+
 # Definição da variaveis do jogo
 mapa_game = carregar_mapa('mapas/mapa1')
 andando_dir = False
@@ -256,6 +265,7 @@ while True:  # Lop infinito do game
                 if tempo_no_ar < 6:  # Para um double jump experimente 30
                     personagem_y_momentum = -5
                     pulando = True
+                    som_pulo.play()
 
         if evento.type == KEYUP:  # Ao soltar alguma tecla
             if evento.key == K_RIGHT:  # Se for seta direita
