@@ -1,6 +1,7 @@
 import pygame  # importa o pygame
 import sys  # importa recursos do sistema
 from pygame.locals import *  # importa os modulos do pygame
+import random
 
 global frames_animacao  # Declarando uma variavel global
 frames_animacao = {}
@@ -103,10 +104,11 @@ pygame.init()  # Inicializando o pygame
 clock = pygame.time.Clock()  # Cria uma variavel de controle de clock (Ciclos/tempo)
 
 # Configurações da janela
-janela_tamanho = (820, 460)  # Cria uma variavel com o tamenho da janela em pixels
+monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h - 65]  # tamanho do monitor menos 65 pixels (Pra barra de titulo)
+janela_tamanho = monitor_size  # Cria uma variavel com o tamanho da janela em pixels
 pygame.display.set_caption("Meu jogo")  # Define o título do game que aparece na janela
 janela_game = pygame.display.set_mode(janela_tamanho, 0, 32)  # Exibindo a tela
-display = pygame.Surface((janela_tamanho[0] / 2, janela_tamanho[1] / 2))  # Cria o Display do game, area visivel do jogo
+display = pygame.Surface((640, 360))  # Cria o Display do game, area visivel do jogo
 
 # Importação da imagens
 personagem_sprite = pygame.image.load('imagens/personagens/player1/parado/0.png')  # Adiciona a imagem do player  que está na pasta imagens
@@ -150,18 +152,30 @@ animacao_atual = 'parado'
 frame_aimacao_atual = 0
 pulando = False
 personagem_espelhado = False
+fullscreen = False
 personagem_altura = 40
 personagem_largura = 32
-personagem_colisao = pygame.Rect(50, 50, personagem_largura, personagem_altura)  # Cria o retangulo de colisaão do personagem,
+personagem_colisao = pygame.Rect(320, 50, personagem_largura, personagem_altura)  # Cria o retangulo de colisaão do personagem,
 # com base na sua posição e tamanho
-objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
+'''objetos_cenario = [[0.25, [220, 20, 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
                    [0.25, [480, 60, 'ilha_fundo']],
                    [0.25, [730, 30, 'ilha_fundo']],
                    [0.5, [230, 40, 'ilha_perto']],
                    [0.5, [450, 90, 'ilha_perto']],
                    [0.5, [810, 120, 'ilha_perto']],
                    [0.5, [950, 45, 'ilha_perto']],
-                   [0.5, [1170, 100, 'ilha_perto']]]
+                   [0.5, [1170, 100, 'ilha_perto']]]'''
+
+objetos_cenario = [[0.25, [200, random.randrange(10, 80), 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
+                   [0.25, [480, random.randrange(60, 140), 'ilha_fundo']],
+                   [0.25, [730, random.randrange(20, 100), 'ilha_fundo']],
+                   [0.25, [990, random.randrange(40, 150), 'ilha_fundo']],
+                   [0.5, [230, random.randrange(50, 180), 'ilha_perto']],
+                   [0.5, [450, random.randrange(80, 220), 'ilha_perto']],
+                   [0.5, [810, random.randrange(50, 180), 'ilha_perto']],
+                   [0.5, [950, random.randrange(80, 220), 'ilha_perto']],
+                   [0.5, [1170, random.randrange(50, 180), 'ilha_perto']],
+                   [0.5, [1390, random.randrange(80, 220), 'ilha_perto']]]
 
 # Preenchendo a base de dados de animações
 database_animacoes = {
@@ -176,7 +190,7 @@ while True:  # Lop infinito do game
 
     display.blit(fundo, (0, 0))  # Preenche o fundo da tela coma a imagem
 
-    preencher_fundo_cenario()  # Chama a funççao que preenche os itens de fundo do cenário
+    preencher_fundo_cenario()  # Chama a funçao que preenche os itens de fundo do cenário
 
     # loop para prrencher o mapa percorrendo a lista bidimensional na variavel mapa_game (Populada com dados do txt)
     y = 0
@@ -205,7 +219,7 @@ while True:  # Lop infinito do game
         personagem_movimentacao[0] -= 2
 
     personagem_movimentacao[1] += personagem_y_momentum  # Simular a gravidade
-    personagem_y_momentum += 0.28  # Poder da gravidade, qnd maior mais pesado, menor mais leve
+    personagem_y_momentum += 0.3  # Poder da gravidade, qnd maior mais pesado, menor mais leve
     if personagem_y_momentum > 5:  # Se a força da gravidade chegar a 5
         personagem_y_momentum = 5  # Não aumentara mais, estaciona no 5
 
@@ -256,6 +270,11 @@ while True:  # Lop infinito do game
             pygame.quit()  # Finaliza o game e fecha a tela
             sys.exit()  # Fecha o programa
 
+        if evento.type == KEYDOWN:
+            if evento.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+
         if evento.type == KEYDOWN:  # Ao pressionar alguma tecla
             if evento.key == K_RIGHT:  # Se for direita
                 andando_dir = True  # Andar pra direita passa a ser verdadeiro
@@ -275,6 +294,7 @@ while True:  # Lop infinito do game
 
     # Escala o display (onde estão os elementos do jogo) para o tamanho da janela
     tela_visivel = pygame.transform.scale(display, janela_tamanho)
-    janela_game.blit(tela_visivel, (0, 0))  # Exibe na janela do game a tela_visivel
+    # tela_visivel = pygame.transform.scale(display, (janela_game.get_width(), janela_game.get_height()))
+    janela_game.blit(tela_visivel, (0, 0))  # Exibe na janela do game a tela_visivel'''
     pygame.display.update()  # Comando para atualizar a tela acada loop
     clock.tick(60)  # Define que o game vai rodar a 60 FPS
