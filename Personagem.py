@@ -1,4 +1,4 @@
-import pygame, random
+import pygame
 
 
 class Personagem:
