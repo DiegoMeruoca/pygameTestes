@@ -2,7 +2,7 @@ import pygame
 
 
 class Personagem:
-    def __init__(self, altura, largura, pulo):
+    def __init__(self, altura, largura, pulo, controle, spawn_inicial):
         self.andando_dir = False
         self.andando_esq = False
         self.personagem_y_momentum = 0
@@ -14,11 +14,11 @@ class Personagem:
         self.personagem_espelhado = False
         self.personagem_altura = altura
         self.personagem_largura = largura
-        self.menu = True
-        self.tela1 = False
+        self.controle = controle
+        self.spaw_inicial = spawn_inicial
         self.frames_animacao = {}
         self.som_pulo = pulo
-        self.personagem_colisao = pygame.Rect(320, 50, self.personagem_largura,
+        self.personagem_colisao = pygame.Rect(spawn_inicial, 50, self.personagem_largura,
                                               self.personagem_altura)  # Cria o retangulo de colisaão do personagem,
         self.database_animacoes = {}
 
