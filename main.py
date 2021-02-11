@@ -119,14 +119,14 @@ def movimentar(personagem):
     # Movimentação
     personagem.personagem_movimentacao = [0, 0]
     if personagem.andando_dir:
-        personagem.personagem_movimentacao[0] += 2
+        personagem.personagem_movimentacao[0] += 2.5
     if personagem.andando_esq:
-        personagem.personagem_movimentacao[0] -= 2
+        personagem.personagem_movimentacao[0] -= 2.5
 
     personagem.personagem_movimentacao[1] += personagem.personagem_y_momentum  # Simular a gravidade
-    personagem.personagem_y_momentum += 0.3  # Poder da gravidade, qnd maior mais pesado, menor mais leve
-    if personagem.personagem_y_momentum > 5:  # Se a força da gravidade chegar a 5
-        personagem.personagem_y_momentum = 5  # Não aumentara mais, estaciona no 5
+    personagem.personagem_y_momentum += 0.2  # Poder da gravidade, qnd maior mais pesado, menor mais leve
+    if personagem.personagem_y_momentum > 6:  # Se a força da gravidade chegar a 5
+        personagem.personagem_y_momentum = 6  # Não aumentará mais, estaciona no 5
 
 
 # Alterar animação de acordo com o movimento do personagem passado em parametros
@@ -207,7 +207,7 @@ monitor_size = [pygame.display.Info().current_w,
 janela_tamanho = monitor_size  # Cria uma variavel com o tamanho da janela em pixels
 pygame.display.set_caption("Meu jogo")  # Define o título do game que aparece na janela
 janela_game = pygame.display.set_mode(janela_tamanho, 0, 32)  # Exibindo a tela
-display = pygame.Surface((640, 360))  # Cria o Display do game, area visivel do jogo 360 p
+display = pygame.Surface((1280, 720))  # Cria o Display do game, area visivel do jogo 360 p  1280x720 854x480 640x360
 
 # Importação da imagens
 tamanho_blocos = 32  # Define o tamanho dos blocos do jogo para 32 pixels
@@ -233,7 +233,7 @@ info_menu = pygame.transform.scale(info_menu, (300, 200))
 som_pulo_p1 = pygame.mixer.Sound('sons/pulo.wav')
 musica_fundo = pygame.mixer.Sound('sons/musica.mp3')
 # Play na musica. 0 - Toca uma e repete 0. 3 - Toaca uma e repete 3. -1 - Toca uma e repete ate fechar
-# musica_fundo.play(-1)
+musica_fundo.play(-1)
 
 # Instanciação do obj de mapa
 mapa1 = Mapa(bloco_superficie, bloco_base, fundo, obj_cenario_perto, obj_cenario_longe, musica_fundo, display)
@@ -252,8 +252,8 @@ controle1 = Controle(K_d, K_a, K_w)
 controle2 = Controle(K_RIGHT, K_LEFT, K_UP)
 
 # Instanciação do obj de personagem
-personagem1 = Personagem(40, 32, som_pulo_p1, controle1, 320)
-personagem2 = Personagem(40, 32, som_pulo_p1, controle2, 300)
+personagem1 = Personagem(80, 64, som_pulo_p1, controle1, 320)
+personagem2 = Personagem(80, 64, som_pulo_p1, controle2, 300)
 
 # Preenchendo a base de dados de animações
 personagem1.database_animacoes = povoar_base_animacao(personagem1, 'avatar1')
