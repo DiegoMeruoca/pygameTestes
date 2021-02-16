@@ -14,6 +14,7 @@ class Mapa:
         self.rolagem_tela = 0
         self.colisao_blocos = []
         self.colisoes = []
+        self.linha_morte = 0
         self.mapa_game = self.carregar_mapa('mapas/mapa1')
 
     # Carrega a base do nosos mapa de um txt (0-Epaço vazio(céu) 1-Bloco de terra 2-Bloco com grama)

@@ -6,25 +6,32 @@ from Controle import Controle
 from Mapa import Mapa
 from Personagem import Personagem
 
-global menu, tela1
+global menu, tela1, game_over
 
 
 # Função que controla a captura de enentos
 def controlador_eventos_menu(tela):
-    if tela == 'menu':
-        for evento in pygame.event.get():  # event loop
-            if evento.type == QUIT:  # Se o evento for QUIT (sair)
-                pygame.quit()  # Finaliza o game e fecha a tela
-                sys.exit()  # Fecha o programa
+    global menu, tela1, game_over
+    for evento in pygame.event.get():  # event loop
+        if evento.type == QUIT:  # Se o evento for QUIT (sair)
+            pygame.quit()  # Finaliza o game e fecha a tela
+            sys.exit()  # Fecha o programa
 
-            if evento.type == KEYDOWN:
-                if evento.key == K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+        if evento.type == KEYDOWN:
+            if evento.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
 
+        if tela == 'menu':
             if evento.type == MOUSEBUTTONDOWN:
-                global menu, tela1
                 menu = False
+                tela1 = True
+                game_over = False
+
+        if tela == 'game_over':
+            if evento.type == MOUSEBUTTONDOWN:
+                menu = False
+                game_over = False
                 tela1 = True
 
 
@@ -81,23 +88,34 @@ def controlador_eventos_mapa(person1, person2):
 def preencher_mapa(mapa):
     y = 0
     mapa.colisao_blocos = []
+    mapa.linha_morte = []
     for linha in mapa_game:
         x = 0
         for celula in linha:
             if celula == '1':  # Se a celula for 1
                 display.blit(bloco_base,
-                             (x * tamanho_blocos - mapa1.rolagem_tela[0], y * tamanho_blocos - mapa1.rolagem_tela[1]))
+                             (x * tamanho_blocos - mapa_atual.rolagem_tela[0], y * tamanho_blocos - mapa_atual.rolagem_tela[1]))
                 # Desenha a terra, na posição subtraimos rolagem_tela, isso permite que o bloco se mova para esquerda
                 # caso o valor de rolagem_tela aumente, e para esquerda caso diminua, dando o efeito de rolagem de tela
             if celula == '2':
                 display.blit(bloco_superficie,
-                             (x * tamanho_blocos - mapa1.rolagem_tela[0], y * tamanho_blocos - mapa1.rolagem_tela[1]))
-            if celula != '0':  # Se a celula for diferente de 0, ou seja, é um solido
+                             (x * tamanho_blocos - mapa_atual.rolagem_tela[0], y * tamanho_blocos - mapa_atual.rolagem_tela[1]))
+            if '-' != celula != '0':  # Se a celula for diferente de 0, ou seja, é um solido
                 mapa.colisao_blocos.append(pygame.Rect(x * tamanho_blocos, y * tamanho_blocos,
                                                        tamanho_blocos, tamanho_blocos))
                 # Adiciona um bloco solido no array de solidos com a posição atual do mapa e tamanho de bloco padrão
+            if celula == '-':  # Se a celula for diferente de 0, ou seja, é um solido
+                mapa.linha_morte = (pygame.Rect(x * tamanho_blocos, y * tamanho_blocos,
+                                                       tamanho_blocos, tamanho_blocos))
+                # Adiciona um bloco no array de linha da morte com a posição atual do mapa e tamanho de bloco padrão
             x += 1
         y += 1
+
+
+# Função que define a posição dopersonagem
+def spawn_personagem(personagem, posicao):
+    personagem.personagem_colisao.x = posicao[0]
+    personagem.personagem_colisao.y = posicao[1]
 
 
 # Controla a rolagem da tela - Movimentação da Camera
@@ -156,7 +174,7 @@ def animar_movimento(personagem):
 def controlar_colisoes(personagem):
     personagem.personagem_colisao, personagem.colisoes = personagem.mover(personagem.personagem_colisao,
                                                                           personagem.personagem_movimentacao,
-                                                                          mapa1.colisao_blocos)
+                                                                          mapa_atual.colisao_blocos)
 
     if personagem.colisoes['abaixo']:  # Se estiver no chão (Colidindo com algo abaixo)
         personagem.personagem_y_momentum = 0
@@ -169,6 +187,16 @@ def controlar_colisoes(personagem):
         personagem.personagem_y_momentum = 0
 
 
+# Função que controla qnd o personagem deve morrer
+def controlar_morte(personagem, mapa):
+    global tela1, game_over, menu
+    if personagem.personagem_colisao.y >= mapa.linha_morte.y:
+        tela1 = False
+        game_over = True
+        menu = False
+        spawn_personagem(personagem, (320, 50))
+
+
 # Função que controla as animações de movimento do personagem e espelha a sprite
 def controlar_animacao(personagem):
     personagem.frame_aimacao_atual += 1
@@ -179,8 +207,8 @@ def controlar_animacao(personagem):
     personagem.personagem_sprite = personagem.frames_animacao[personagem.personagem_sprite_id]
     # Renderiza a imagem do personagem sobre a tela na posição do personagem_colisao
     display.blit(pygame.transform.flip(personagem.personagem_sprite, personagem.personagem_espelhado, False),
-                 (personagem.personagem_colisao.x - mapa1.rolagem_tela[0],
-                  personagem.personagem_colisao.y - mapa1.rolagem_tela[1]))
+                 (personagem.personagem_colisao.x - mapa_atual.rolagem_tela[0],
+                  personagem.personagem_colisao.y - mapa_atual.rolagem_tela[1]))
     # Transform flip espelha ou não o personagem de acordo com a variavel personagem_espelhado
 
 
@@ -229,24 +257,27 @@ obj_cenario_longe = pygame.transform.scale(obj_cenario_longe, (120, 120))
 info_menu = pygame.image.load('imagens/menu/info_menu.png')
 info_menu = pygame.transform.scale(info_menu, (300, 200))
 
+msg_game_over = pygame.image.load('imagens/menu/game_over.png')
+msg_game_over = pygame.transform.scale(msg_game_over, (300, 200))
+
 # Importar os sons
 som_pulo_p1 = pygame.mixer.Sound('sons/pulo.wav')
 musica_fundo = pygame.mixer.Sound('sons/musica.mp3')
 # Play na musica. 0 - Toca uma e repete 0. 3 - Toaca uma e repete 3. -1 - Toca uma e repete ate fechar
-# musica_fundo.play(-1)
+musica_fundo.play(-1)
 
 # Instanciação do obj de mapa
-mapa1 = Mapa(bloco_superficie, bloco_base, fundo, obj_cenario_perto, obj_cenario_longe, musica_fundo, display)
-mapa1.objetos_cenario = [[0.25, [200, random.randrange(10, 80), 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
-                         [0.25, [480, random.randrange(60, 140), 'ilha_fundo']],
-                         [0.25, [730, random.randrange(20, 100), 'ilha_fundo']],
-                         [0.25, [990, random.randrange(40, 150), 'ilha_fundo']],
-                         [0.5, [230, random.randrange(50, 180), 'ilha_perto']],
-                         [0.5, [450, random.randrange(80, 220), 'ilha_perto']],
-                         [0.5, [810, random.randrange(50, 180), 'ilha_perto']],
-                         [0.5, [950, random.randrange(80, 220), 'ilha_perto']],
-                         [0.5, [1170, random.randrange(50, 180), 'ilha_perto']],
-                         [0.5, [1390, random.randrange(80, 220), 'ilha_perto']]]
+mapa_atual = Mapa(bloco_superficie, bloco_base, fundo, obj_cenario_perto, obj_cenario_longe, musica_fundo, display)
+mapa_atual.objetos_cenario = [[0.25, [200, random.randrange(10, 80), 'ilha_fundo']],  # [% de Paralax, [X, Y, tipo]
+                              [0.25, [480, random.randrange(60, 140), 'ilha_fundo']],
+                              [0.25, [730, random.randrange(20, 100), 'ilha_fundo']],
+                              [0.25, [990, random.randrange(40, 150), 'ilha_fundo']],
+                              [0.5, [230, random.randrange(50, 180), 'ilha_perto']],
+                              [0.5, [450, random.randrange(80, 220), 'ilha_perto']],
+                              [0.5, [810, random.randrange(50, 180), 'ilha_perto']],
+                              [0.5, [950, random.randrange(80, 220), 'ilha_perto']],
+                              [0.5, [1170, random.randrange(50, 180), 'ilha_perto']],
+                              [0.5, [1390, random.randrange(80, 220), 'ilha_perto']]]
 
 controle1 = Controle(K_d, K_a, K_w)
 controle2 = Controle(K_RIGHT, K_LEFT, K_UP)
@@ -260,10 +291,12 @@ personagem1.database_animacoes = povoar_base_animacao(personagem1, 'avatar1')
 personagem2.database_animacoes = povoar_base_animacao(personagem2, 'avatar2')
 
 # Definição da variaveis do jogo
-mapa_game = mapa1.carregar_mapa('mapas/mapa1')
+mapa_game = mapa_atual.carregar_mapa('mapas/mapa1')
 rolagem_verdadeira = [0, 0]
 menu = True
 tela1 = False
+game_over = False
+
 
 while True:  # Lop infinito do game
 
@@ -273,13 +306,13 @@ while True:  # Lop infinito do game
         controlador_eventos_menu('menu')  # Chama a função para capturas e controle de eventos
 
     if tela1:
-        mapa1.rolagem_tela = controle_rolagem_tela(personagem1, personagem2)  # Cahama o controle de camera
+        mapa_atual.rolagem_tela = controle_rolagem_tela(personagem1, personagem2)  # Cahama o controle de camera
 
         display.blit(fundo, (0, 0))  # Preenche o fundo da tela coma a imagem
 
-        mapa1.preencher_fundo_cenario()  # Chama ao método que preenche os itens de fundo do cenário
+        mapa_atual.preencher_fundo_cenario()  # Chama ao método que preenche os itens de fundo do cenário
 
-        preencher_mapa(mapa1)  # Cahama a função que preenche a plataforma do mapa
+        preencher_mapa(mapa_atual)  # Cahama a função que preenche a plataforma do mapa
 
         movimentar(personagem1)  # Move o retangulo de colisão do personagem pela tela, acompanhado da sprite
         movimentar(personagem2)
@@ -294,6 +327,13 @@ while True:  # Lop infinito do game
         controlar_animacao(personagem2)
 
         controlador_eventos_mapa(personagem1, personagem2)  # Cama a função para capturas e controle de eventos
+
+        controlar_morte(personagem1, mapa_atual)
+
+    if game_over:
+        display.blit(fundo, (0, 0))  # Preenche o fundo da tela coma a imagem
+        display.blit(msg_game_over, [165, 75])
+        controlador_eventos_menu('game_over')  # Chama a função para capturas e controle de eventos
 
     # Escala o display (onde estão os elementos do jogo) para o tamanho da janela
     tela_visivel = pygame.transform.scale(display, janela_tamanho)
