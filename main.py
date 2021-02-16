@@ -124,9 +124,9 @@ def movimentar(personagem):
         personagem.personagem_movimentacao[0] -= 2.5
 
     personagem.personagem_movimentacao[1] += personagem.personagem_y_momentum  # Simular a gravidade
-    personagem.personagem_y_momentum += 0.2  # Poder da gravidade, qnd maior mais pesado, menor mais leve
-    if personagem.personagem_y_momentum > 6:  # Se a força da gravidade chegar a 5
-        personagem.personagem_y_momentum = 6  # Não aumentará mais, estaciona no 5
+    personagem.personagem_y_momentum += 0.3  # Poder da gravidade, qnd maior mais pesado, menor mais leve
+    if personagem.personagem_y_momentum > 5:  # Se a força da gravidade chegar a 5
+        personagem.personagem_y_momentum = 5  # Não aumentará mais, estaciona no 5
 
 
 # Alterar animação de acordo com o movimento do personagem passado em parametros
@@ -210,7 +210,7 @@ janela_game = pygame.display.set_mode(janela_tamanho, 0, 32)  # Exibindo a tela
 display = pygame.Surface((1280, 720))  # Cria o Display do game, area visivel do jogo 360 p  1280x720 854x480 640x360
 
 # Importação da imagens
-tamanho_blocos = 32  # Define o tamanho dos blocos do jogo para 32 pixels
+tamanho_blocos = 64  # Define o tamanho dos blocos do jogo para 32 pixels
 bloco_superficie = pygame.image.load('imagens/cenario/blocos/BlocoSuperficie.png')  # Importa o bloco com grama
 bloco_superficie = pygame.transform.scale(bloco_superficie, (tamanho_blocos, tamanho_blocos))
 
